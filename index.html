@@ -60,41 +60,46 @@
     background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 14px;
     cursor:pointer; text-align:left; display:flex; flex-direction:column; gap:8px;
   }
-  .card .icon{ font-size:26px; }
+  .card .icon-box{ width:40px; height:40px; }
   .card .label{ font-weight:700; font-size:15px; }
   .card .sub{ font-size:12px; color:var(--text-muted); }
   .card.orange{ border-top:4px solid var(--orange); }
   .card.green{ border-top:4px solid var(--green); }
 
   .urgence-btn{
-    width:100%; background:var(--danger); color:#fff; border:none; border-radius:14px; padding:16px;
-    font-size:16px; font-weight:700; display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:16px;
+    width:100%; background:var(--danger); color:#fff; border:none; border-radius:14px; padding:14px 16px;
+    font-size:16px; font-weight:700; display:flex; align-items:center; gap:12px; cursor:pointer; margin-bottom:16px;
   }
+  .urgence-btn .icon-box{ width:34px; height:34px; flex:0 0 auto; }
   .urgence-btn .arrow{ margin-left:auto; opacity:.85; }
 
   .section-title{ font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin:18px 0 8px; font-weight:700; }
 
+  /* pictogram box like the original document's little square icons */
+  .icon-box{ display:inline-flex; align-items:center; justify-content:center; }
+  .icon-box svg{ width:100%; height:100%; display:block; }
+  .pic-square{
+    width:46px; height:46px; border:2px solid var(--text); border-radius:8px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; background:#fff; padding:5px;
+  }
+  .pic-square.accent-orange{ border-color:var(--orange); }
+  .pic-square.accent-green{ border-color:var(--green); }
+  .pic-square.accent-danger{ border-color:var(--danger); }
+  .pic-hero{
+    width:84px; height:84px; border:3px solid var(--text); border-radius:14px; margin:0 auto 14px;
+    display:flex; align-items:center; justify-content:center; background:#fff; padding:10px;
+  }
+
   .list-item{
-    background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px;
     margin-bottom:10px; cursor:pointer; display:flex; align-items:center; gap:12px;
   }
-  .list-item .emoji{ font-size:22px; flex:0 0 auto; }
   .list-item .txt{ flex:1; }
   .list-item .txt .t{ font-weight:600; font-size:14.5px; }
   .list-item .txt .s{ font-size:12.5px; color:var(--text-muted); margin-top:2px; }
   .list-item .chev{ color:var(--text-muted); }
 
   .step-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
-  .step-head{
-    padding:14px; display:flex; align-items:center; gap:10px; cursor:pointer; background:var(--green-light);
-  }
-  .step-head .num{
-    width:28px; height:28px; border-radius:50%; background:var(--green); color:#fff; font-weight:700;
-    display:flex; align-items:center; justify-content:center; font-size:13px; flex:0 0 auto;
-  }
-  .step-head .title{ font-weight:700; font-size:15px; flex:1; }
-  .step-body{ padding:14px; font-size:14px; line-height:1.55; display:none; }
-  .step-body.open{ display:block; }
 
   .result-banner{
     background:#fdf1e6; border-left:4px solid var(--orange); border-radius:8px; padding:10px 12px; margin:12px 0;
@@ -121,10 +126,14 @@
   .flow{ display:flex; flex-direction:column; gap:8px; margin:14px 0; }
   .flow .fstep{
     display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--border);
-    border-radius:10px; padding:10px 12px; font-weight:700; font-size:14px;
+    border-radius:10px; padding:10px 12px; font-weight:700; font-size:14px; cursor:pointer;
   }
-  .flow .fstep .n{ width:26px; height:26px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .flow .fstep .pic-square{ width:38px; height:38px; padding:4px; }
   .flow .arrowdown{ text-align:center; color:var(--text-muted); font-size:13px; }
+
+  .titlerow{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .titlerow .pic-square{ width:52px; height:52px; }
+  .titlerow h1{ font-size:19px; margin:0; font-weight:700; }
 
   footer.foot{ text-align:center; font-size:11.5px; color:var(--text-muted); padding:20px 14px 30px; }
 </style>
@@ -133,43 +142,127 @@
 <div id="app"></div>
 
 <script>
+// ---------- Pictogram library (simple line-art, in the spirit of the original document) ----------
+const C = { ink:'#1c2226', green:'#007a4d', orange:'#e8791a', danger:'#d1461f', mute:'#8a929a' };
+
+function standFig(color, dy){
+  dy = dy||0;
+  return `<g>
+    <circle cx="50" cy="${20+dy}" r="10" fill="none" stroke="${color}" stroke-width="6"/>
+    <line x1="50" y1="${30+dy}" x2="50" y2="${60+dy}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="${38+dy}" x2="34" y2="${50+dy}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="${38+dy}" x2="66" y2="${50+dy}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="${60+dy}" x2="38" y2="${84+dy}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="${60+dy}" x2="62" y2="${84+dy}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+  </g>`;
+}
+function lieFig(color){
+  return `<g>
+    <circle cx="16" cy="55" r="10" fill="none" stroke="${color}" stroke-width="6"/>
+    <line x1="26" y1="55" x2="68" y2="55" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="42" y1="55" x2="37" y2="38" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="68" y1="55" x2="86" y2="46" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="68" y1="55" x2="86" y2="64" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+  </g>`;
+}
+function svgWrap(inner){ return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
+
+const ICONS = {
+  groupPeople: svgWrap(`
+    <g transform="translate(-6,14) scale(0.5)">${standFig(C.mute)}</g>
+    <g transform="translate(22,-4) scale(0.62)">${standFig(C.orange)}</g>
+    <g transform="translate(50,14) scale(0.5)">${standFig(C.mute)}</g>`),
+  observe: svgWrap(`
+    <ellipse cx="42" cy="22" rx="20" ry="11" fill="none" stroke="${C.green}" stroke-width="5"/>
+    <circle cx="42" cy="22" r="5" fill="${C.green}"/>
+    <text x="78" y="20" font-size="26" fill="${C.green}" font-weight="800" font-family="sans-serif">?</text>
+    <g transform="translate(0,18)">${standFig(C.green)}</g>`),
+  dangerCross: svgWrap(`
+    <polygon points="50,15 87,82 13,82" fill="none" stroke="${C.danger}" stroke-width="6" stroke-linejoin="round"/>
+    <text x="50" y="68" font-size="30" text-anchor="middle" fill="${C.danger}" font-weight="800" font-family="sans-serif">!</text>
+    <line x1="16" y1="18" x2="84" y2="80" stroke="${C.danger}" stroke-width="6" stroke-linecap="round"/>`),
+  dangerWarn: svgWrap(`
+    <polygon points="50,15 87,82 13,82" fill="none" stroke="${C.danger}" stroke-width="6" stroke-linejoin="round"/>
+    <text x="50" y="68" font-size="30" text-anchor="middle" fill="${C.danger}" font-weight="800" font-family="sans-serif">!</text>`),
+  magnify: svgWrap(`
+    <circle cx="40" cy="40" r="24" fill="none" stroke="${C.green}" stroke-width="6"/>
+    <line x1="58" y1="58" x2="84" y2="84" stroke="${C.green}" stroke-width="7" stroke-linecap="round"/>`),
+  phoneAlert: svgWrap(`
+    <rect x="14" y="14" width="72" height="46" rx="10" fill="none" stroke="${C.green}" stroke-width="6"/>
+    <polygon points="30,60 30,80 50,60" fill="none" stroke="${C.green}" stroke-width="6" stroke-linejoin="round"/>
+    <line x1="26" y1="30" x2="74" y2="30" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>
+    <line x1="26" y1="44" x2="56" y2="44" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>`),
+  saigne: svgWrap(`${lieFig(C.ink)}<circle cx="44" cy="55" r="7" fill="${C.danger}"/>`),
+  etouffe: svgWrap(`${standFig(C.ink)}
+    <line x1="40" y1="32" x2="60" y2="26" stroke="${C.danger}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="60" y1="32" x2="40" y2="26" stroke="${C.danger}" stroke-width="6" stroke-linecap="round"/>`),
+  rcp: svgWrap(`${lieFig(C.ink)}
+    <path d="M46 14 L37 36 L51 36 L40 60" fill="none" stroke="${C.orange}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`),
+  pls: svgWrap(`${lieFig(C.ink)}
+    <path d="M4 42 Q12 30 20 42" fill="none" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>
+    <path d="M2 50 Q10 40 18 50" fill="none" stroke="${C.green}" stroke-width="4" fill-opacity="0" stroke-linecap="round" opacity="0.6"/>`),
+  malaise: svgWrap(`<g transform="translate(-4,14)">${standFig(C.ink)}</g>
+    <rect x="54" y="6" width="36" height="24" rx="7" fill="none" stroke="${C.orange}" stroke-width="5"/>
+    <text x="72" y="24" font-size="18" text-anchor="middle" fill="${C.orange}" font-weight="800" font-family="sans-serif">?</text>`),
+  brulure: svgWrap(`<g transform="translate(8,22)">${standFig(C.ink)}</g>
+    <path d="M16 6 Q19 12 16 18 Q13 24 16 30" stroke="${C.green}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M40 2 Q43 8 40 14 Q37 20 40 26" stroke="${C.green}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M64 6 Q67 12 64 18 Q61 24 64 30" stroke="${C.green}" stroke-width="4" fill="none" stroke-linecap="round"/>`),
+  trauma: svgWrap(`${lieFig(C.ink)}
+    <circle cx="20" cy="50" r="6" fill="${C.danger}"/>
+    <line x1="8" y1="44" x2="8" y2="66" stroke="${C.ink}" stroke-width="4"/>
+    <line x1="32" y1="44" x2="32" y2="66" stroke="${C.ink}" stroke-width="4"/>`),
+  plaie: svgWrap(`${lieFig(C.ink)}
+    <line x1="42" y1="55" x2="52" y2="55" stroke="${C.danger}" stroke-width="5" stroke-linecap="round"/>
+    <line x1="47" y1="50" x2="47" y2="60" stroke="${C.danger}" stroke-width="5" stroke-linecap="round"/>`),
+  clock: svgWrap(`<circle cx="50" cy="50" r="34" fill="none" stroke="${C.green}" stroke-width="6"/>
+    <line x1="50" y1="50" x2="50" y2="26" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>
+    <line x1="50" y1="50" x2="68" y2="60" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>`),
+  info: svgWrap(`<circle cx="50" cy="50" r="34" fill="none" stroke="${C.mute}" stroke-width="6"/>
+    <circle cx="50" cy="30" r="4.5" fill="${C.mute}"/>
+    <line x1="50" y1="44" x2="50" y2="70" stroke="${C.mute}" stroke-width="6" stroke-linecap="round"/>`),
+  shield: svgWrap(`<path d="M50 10 L84 24 L84 50 Q84 78 50 92 Q16 78 16 50 L16 24 Z" fill="none" stroke="${C.orange}" stroke-width="6" stroke-linejoin="round"/>`),
+  cross: svgWrap(`<rect x="38" y="12" width="24" height="76" rx="5" fill="${C.green}"/><rect x="12" y="38" width="76" height="24" rx="5" fill="${C.green}"/>`),
+  siren: svgWrap(`<polygon points="50,12 90,84 10,84" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+    <line x1="50" y1="38" x2="50" y2="60" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="50" cy="70" r="4" fill="#fff"/>`)
+};
+
+function iconSquare(id, extraClass){
+  return `<div class="pic-square ${extraClass||''}"><div class="icon-box">${ICONS[id]}</div></div>`;
+}
+function iconHero(id){
+  return `<div class="pic-hero"><div class="icon-box">${ICONS[id]}</div></div>`;
+}
+
+// ---------- Content data ----------
 const DATA = {
   prevention: [
-    {
-      id:'p1', title:'Être acteur de la prévention', emoji:'🛡️',
-      html:`<div class="body-text">
-        <p><strong>En tant que sauveteur secouriste du travail (SST)</strong>, vous contribuez à la prévention des risques professionnels dans l'entreprise, en :</p>
-      </div>
+    { id:'p1', title:'Être acteur de la prévention', icon:'groupPeople',
+      html:`<div class="body-text"><p><strong>En tant que sauveteur secouriste du travail (SST)</strong>, vous contribuez à la prévention des risques professionnels dans l'entreprise, en :</p></div>
       <ul class="action-list">
         <li><strong>repérant</strong> les situations dangereuses et en <strong>identifiant</strong> les dangers pouvant entraîner une atteinte à la santé, ainsi que les personnes y étant exposées ;</li>
         <li><strong>supprimant ou faisant supprimer</strong> les dangers dans la limite de votre champ de compétences, de votre autonomie et dans le respect de l'organisation de l'entreprise et des procédures spécifiques fixées en matière de prévention ;</li>
         <li><strong>relayant</strong> aux personnes concernées les informations liées aux situations dangereuses repérées.</li>
       </ul>
-      <div class="body-text"><p>Ces actions permettront de supprimer ou de réduire les risques professionnels auxquels vous ou vos collègues pourraient être exposés.</p></div>`
-    },
-    {
-      id:'p2', title:"De l'observation à la remontée d'informations", emoji:'👁️',
-      html:`<h4 class="subtitle">👁️ Observer</h4>
+      <div class="body-text"><p>Ces actions permettront de supprimer ou de réduire les risques professionnels auxquels vous ou vos collègues pourraient être exposés.</p></div>` },
+    { id:'p2', title:"De l'observation à la remontée d'informations", icon:'observe',
+      html:`<h4 class="subtitle">Observer</h4>
       <div class="body-text"><p>Observer les situations de travail pour en repérer les situations dangereuses.</p>
       <p><strong>Une situation professionnelle est dangereuse</strong> lorsqu'un ou plusieurs individus sont exposés à un ou plusieurs dangers pouvant entraîner un accident ou une maladie.</p></div>
-      <h4 class="subtitle">💬 Informer</h4>
-      <div class="body-text"><p>Informer les personnes exposées au(x) danger(s) et faire remonter à celles en charge de la prévention des risques les situations dangereuses.</p></div>`
-    },
-    {
-      id:'p3', title:'Supprimer / réduire le danger', emoji:'🚫',
+      <h4 class="subtitle">Informer</h4>
+      <div class="body-text"><p>Informer les personnes exposées au(x) danger(s) et faire remonter à celles en charge de la prévention des risques les situations dangereuses.</p></div>` },
+    { id:'p3', title:'Supprimer / réduire le danger', icon:'dangerCross',
       html:`<h4 class="subtitle">Contribuer à la suppression du danger</h4>
       <div class="body-text"><p>Si vous repérez une situation dangereuse, la solution à privilégier est de supprimer le danger identifié, par votre action ou celle d'un tiers, s'il est possible d'agir directement.</p></div>
       <div class="quote">Toute situation dangereuse repérée doit faire l'objet d'une remontée d'informations</div>
       <h4 class="subtitle">Contribuer à la réduction du risque</h4>
       <div class="body-text"><p>Si le danger ne peut pas être supprimé, vous pouvez contribuer à réduire le risque en proposant des pistes d'amélioration en matière de prévention.</p></div>
       <h3 class="blocktitle">Actions complémentaires</h3>
-      <div class="body-text"><p>Lorsque les mesures de prévention ne sont pas suffisantes, des mesures de protection doivent être mises en place en privilégiant les protections collectives aux protections individuelles.</p></div>`
-    }
+      <div class="body-text"><p>Lorsque les mesures de prévention ne sont pas suffisantes, des mesures de protection doivent être mises en place en privilégiant les protections collectives aux protections individuelles.</p></div>` }
   ],
 
-  secoursIntro: `<div class="body-text">
-    <p>En tant que SST, vous intervenez sur votre lieu de travail pour porter les premiers secours à toute victime d'un accident dans les limites de votre champ d'intervention :</p>
-    </div>
+  secoursIntro: `<div class="body-text"><p>En tant que SST, vous intervenez sur votre lieu de travail pour porter les premiers secours à toute victime d'un accident dans les limites de votre champ d'intervention :</p></div>
     <ul class="action-list">
       <li>le plus tôt possible et jusqu'à la prise en charge de la victime par les secours (internes ou externes) ;</li>
       <li>sous la responsabilité de l'employeur au sein de l'entreprise ;</li>
@@ -178,27 +271,20 @@ const DATA = {
     <div class="body-text"><p>Vous pouvez également être amené à intervenir en dehors de votre lieu de travail afin de porter assistance à une personne en péril.</p></div>`,
 
   steps: [
-    {
-      id:'proteger', num:1, title:'Protéger', emoji:'🛑',
+    { id:'proteger', num:1, title:'Protéger', icon:'dangerWarn',
       html:`<div class="body-text"><p>C'est agir, sans risque pour sa propre sécurité, afin d'éviter un sur-accident, lorsque la victime et toute autre personne sont exposées à un danger persistant.</p></div>
       <h4 class="subtitle">Identifier le(s) danger(s) persistant(s)</h4>
-      <ul class="action-list">
-        <li>Mécanique.</li><li>Électrique.</li>
-        <li>Thermique ou pouvant provoquer un incendie ou une explosion.</li>
-        <li>Atmosphère toxique ou irrespirable.</li>
-      </ul>
+      <ul class="action-list"><li>Mécanique.</li><li>Électrique.</li><li>Thermique ou pouvant provoquer un incendie ou une explosion.</li><li>Atmosphère toxique ou irrespirable.</li></ul>
       <div class="flow">
-        <div class="fstep"><div class="n">?</div>Peut-on les supprimer de façon permanente et sans risque ?</div>
+        <div class="fstep">${iconSquare('dangerWarn')}Peut-on les supprimer de façon permanente et sans risque ?</div>
         <div class="arrowdown">↓ Si oui : le faire ou le faire faire</div>
-        <div class="fstep"><div class="n">?</div>Sinon, peut-on isoler la zone dangereuse de façon permanente et sans risque ?</div>
+        <div class="fstep">${iconSquare('dangerWarn')}Sinon, peut-on isoler la zone dangereuse de façon permanente et sans risque ?</div>
         <div class="arrowdown">↓ Si oui : le faire ou le faire faire</div>
-        <div class="fstep"><div class="n">!</div>Interdire l'accès à la zone dangereuse.</div>
+        <div class="fstep">${iconSquare('dangerCross','accent-danger')}Interdire l'accès à la zone dangereuse.</div>
       </div>
       <h3 class="blocktitle">Actions complémentaires</h3>
-      <div class="body-text"><p>Si le danger persistant est réel, immédiat, non contrôlable et menace la vie de la victime : effectuer une manœuvre exceptionnelle de dégagement d'urgence.</p></div>`
-    },
-    {
-      id:'examiner', num:2, title:'Examiner', emoji:'🔍',
+      <div class="body-text"><p>Si le danger persistant est réel, immédiat, non contrôlable et menace la vie de la victime : effectuer une manœuvre exceptionnelle de dégagement d'urgence.</p></div>` },
+    { id:'examiner', num:2, title:'Examiner', icon:'magnify',
       html:`<div class="body-text"><p>C'est rechercher les signes qui indiquent que la vie de la victime est menacée.</p></div>
       <ul class="action-list">
         <li>La victime saigne-t-elle abondamment ?</li>
@@ -206,14 +292,12 @@ const DATA = {
         <li>La victime répond-elle aux questions ? Se plaint-elle ?</li>
         <li>La victime, si elle ne répond pas, respire-t-elle ?</li>
       </ul>
-      <div class="note">Dans le cas où la victime est sur le ventre, la mettre sur le dos.</div>`
-    },
-    {
-      id:'alerter', num:3, title:'Faire alerter', emoji:'📞',
+      <div class="note">Dans le cas où la victime est sur le ventre, la mettre sur le dos.</div>` },
+    { id:'alerter', num:3, title:'Faire alerter', icon:'phoneAlert',
       html:`<div class="body-text"><p>C'est transmettre les informations nécessaires et suffisantes pour que les secours puissent organiser leur intervention. L'alerte doit être la plus précoce possible.</p></div>
       <h4 class="subtitle">Qui ?</h4>
       <div class="body-text"><p>Les secours et les personnes prévues dans l'organisation des secours de l'entreprise.</p></div>
-      <div class="note">📱 Le 114 est le numéro d'appel pour les sourds et malentendants.</div>
+      <div class="note">Le 114 est le numéro d'appel pour les sourds et malentendants.</div>
       <h4 class="subtitle">Comment ?</h4>
       <div class="body-text"><p>Choisir, si possible, la personne la plus apte pour faire alerter les secours.</p></div>
       <h4 class="subtitle">Préciser dans le message d'alerte</h4>
@@ -224,213 +308,89 @@ const DATA = {
         <li>L'état de la (des) victime(s).</li>
         <li>Les actions déjà engagées.</li>
       </ul>
-      <div class="note">☎️ Ne jamais raccrocher le premier.</div>
+      <div class="note">Ne jamais raccrocher le premier.</div>
       <h3 class="blocktitle">Actions complémentaires</h3>
       <ul class="action-list">
         <li>S'assurer que l'alerte a bien été donnée.</li>
         <li>Envoyer une personne au-devant des secours et organiser leur accès sur le lieu de l'accident au plus près de la victime.</li>
-      </ul>`
-    }
+      </ul>` }
   ],
 
   secourir: [
-    {
-      id:'saigne', emoji:'🩸', title:'La victime saigne abondamment', keywords:'sang hémorragie garrot pansement',
+    { id:'saigne', icon:'saigne', title:'La victime saigne abondamment', keywords:'sang hémorragie garrot pansement',
       resultat:"Arrêter le saignement",
       principales:`<ul class="action-list">
         <li>Faire comprimer ou comprimer l'endroit qui saigne avec la paume de la main (protégée si possible).</li>
         <li>Allonger la victime.</li>
         <li>Si compression manuelle inefficace : garrot.</li>
         <li>Si compression manuelle efficace : pansement compressif si besoin.
-          <ul>
-            <li>si le saignement reprend : compression manuelle sur le pansement compressif ;</li>
-            <li>si le saignement se poursuit : garrot.</li>
-          </ul>
-        </li>
-      </ul>`,
+          <ul><li>si le saignement reprend : compression manuelle sur le pansement compressif ;</li><li>si le saignement se poursuit : garrot.</li></ul>
+        </li></ul>`,
       cas:`<h4 class="subtitle">Cas particuliers</h4>
       <ul class="action-list">
         <li><strong>Saignement de nez</strong> : demander à la victime de s'asseoir, tête penchée en avant ; la faire moucher, puis lui demander de se comprimer les narines pendant 10 minutes.</li>
         <li><strong>Vomissements ou crachats sanglants</strong> : mettre la victime dans la position où elle se sent le mieux.</li>
       </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Surveiller l'efficacité de la technique utilisée.</li>
-        <li>Couvrir la victime (si un garrot est posé, le laisser visible).</li>
-        <li>Réconforter.</li>
-      </ul>`
-    },
-    {
-      id:'etouffe', emoji:'🫁', title:"La victime s'étouffe", keywords:'obstruction heimlich claques dos avale',
+      complementaires:`<ul class="action-list"><li>Surveiller l'efficacité de la technique utilisée.</li><li>Couvrir la victime (si un garrot est posé, le laisser visible).</li><li>Réconforter.</li></ul>` },
+    { id:'etouffe', icon:'etouffe', title:"La victime s'étouffe", keywords:'obstruction heimlich claques dos avale',
       resultat:"Lui permettre de respirer",
       principales:`<h4 class="subtitle">Obstruction complète</h4>
       <div class="body-text"><p style="font-size:13.5px;color:var(--text-muted)">(la victime ne peut plus parler, tousser ou émettre un son, garde la bouche ouverte...)</p></div>
-      <ul class="action-list">
-        <li>Donner de 1 à 5 claques dans le dos.</li>
-        <li>Si inefficace :
-          <ul>
-            <li>adulte, grand enfant : compressions abdominales (méthode de Heimlich) ;</li>
-            <li>femme enceinte, personne obèse : compressions thoraciques ;</li>
-            <li>nourrisson tenant sur l'avant-bras du SST : compressions thoraciques avec deux doigts au milieu de la poitrine.</li>
-          </ul>
-        </li>
-      </ul>
+      <ul class="action-list"><li>Donner de 1 à 5 claques dans le dos.</li><li>Si inefficace :
+        <ul><li>adulte, grand enfant : compressions abdominales (méthode de Heimlich) ;</li><li>femme enceinte, personne obèse : compressions thoraciques ;</li><li>nourrisson tenant sur l'avant-bras du SST : compressions thoraciques avec deux doigts au milieu de la poitrine.</li></ul></li></ul>
       <h4 class="subtitle">Obstruction partielle</h4>
       <div class="body-text"><p style="font-size:13.5px;color:var(--text-muted)">(la victime peut parler, tousser et respirer même avec un bruit surajouté)</p></div>
-      <ul class="action-list">
-        <li>Mettre la victime dans la position où elle se sent le mieux.</li>
-        <li>L'encourager à tousser.</li>
-        <li>Suivre les conseils donnés par les secours.</li>
-      </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Mettre la victime dans la position dans laquelle elle se sent le mieux.</li>
-        <li>Couvrir et surveiller son état.</li>
-        <li>Réconforter.</li>
-        <li>Suivre les conseils donnés par les secours.</li>
-      </ul>`
-    },
-    {
-      id:'rcp', emoji:'❤️‍🩹', title:'Ne répond pas, ne respire pas', keywords:'arrêt cardiaque rcp massage défibrillateur dae réanimation',
+      <ul class="action-list"><li>Mettre la victime dans la position où elle se sent le mieux.</li><li>L'encourager à tousser.</li><li>Suivre les conseils donnés par les secours.</li></ul>`,
+      complementaires:`<ul class="action-list"><li>Mettre la victime dans la position dans laquelle elle se sent le mieux.</li><li>Couvrir et surveiller son état.</li><li>Réconforter.</li><li>Suivre les conseils donnés par les secours.</li></ul>` },
+    { id:'rcp', icon:'rcp', title:'Ne répond pas, ne respire pas', keywords:'arrêt cardiaque rcp massage défibrillateur dae réanimation',
       resultat:"Rétablir artificiellement une respiration et une circulation sanguine efficaces",
       principales:`<h4 class="subtitle">Chez l'adulte</h4>
-      <ul class="action-list">
-        <li>Comprimer le thorax (30 compressions) en respectant un rythme de 100 à 120 par minute.</li>
-        <li>Souffler de l'air dans les poumons (2 insufflations).</li>
-        <li>Répéter des cycles de 30 compressions et 2 insufflations.</li>
-        <li>Mettre en œuvre le plus tôt possible le défibrillateur (DAE) en demandant, le cas échéant, à un témoin de le rapporter.</li>
-      </ul>
+      <ul class="action-list"><li>Comprimer le thorax (30 compressions) en respectant un rythme de 100 à 120 par minute.</li><li>Souffler de l'air dans les poumons (2 insufflations).</li><li>Répéter des cycles de 30 compressions et 2 insufflations.</li><li>Mettre en œuvre le plus tôt possible le défibrillateur (DAE) en demandant, le cas échéant, à un témoin de le rapporter.</li></ul>
       <h4 class="subtitle">Chez l'enfant et le nourrisson</h4>
       <div class="body-text"><p>Même conduite à tenir que chez l'adulte, mais il convient de :</p></div>
-      <ul class="action-list">
-        <li>Débuter par 5 insufflations.</li>
-        <li>Répéter des cycles de 15 compressions et 2 insufflations.</li>
-      </ul>
-      <div class="note">🚑 Poursuivre la réanimation jusqu'à l'arrivée des secours.</div>`,
-      complementaires:`<ul class="action-list">
-        <li>Surveiller l'efficacité de la (des) technique(s) utilisée(s).</li>
-        <li>Pratiquer, si possible, la RCP à 2 SST. Se relayer toutes les 2 minutes en interrompant le moins possible les compressions thoraciques.</li>
-        <li>Si les insufflations ne peuvent pas être effectuées, réaliser uniquement les compressions thoraciques en continu.</li>
-      </ul>`
-    },
-    {
-      id:'pls', emoji:'😴', title:'Ne répond pas, mais respire', keywords:'pls position latérale sécurité inconscient',
+      <ul class="action-list"><li>Débuter par 5 insufflations.</li><li>Répéter des cycles de 15 compressions et 2 insufflations.</li></ul>
+      <div class="note">Poursuivre la réanimation jusqu'à l'arrivée des secours.</div>`,
+      complementaires:`<ul class="action-list"><li>Surveiller l'efficacité de la (des) technique(s) utilisée(s).</li><li>Pratiquer, si possible, la RCP à 2 SST. Se relayer toutes les 2 minutes en interrompant le moins possible les compressions thoraciques.</li><li>Si les insufflations ne peuvent pas être effectuées, réaliser uniquement les compressions thoraciques en continu.</li></ul>` },
+    { id:'pls', icon:'pls', title:'Ne répond pas, mais respire', keywords:'pls position latérale sécurité inconscient',
       resultat:"Lui permettre de continuer à respirer",
-      principales:`<ul class="action-list">
-        <li>Allonger la victime sur le dos.</li>
-        <li>Libérer les voies respiratoires.</li>
-        <li>Si son état résulte d'un évènement <strong>non traumatique</strong>, mettre la victime sur le côté (position latérale de sécurité – PLS).</li>
-        <li>Si son état résulte d'un évènement <strong>traumatique</strong> ou d'un évènement dont on ne connaît pas l'origine : laisser la victime sur le dos et maintenir la liberté des voies aériennes.</li>
-      </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Couvrir.</li>
-        <li>Surveiller en permanence sa respiration.</li>
-      </ul>`
-    },
-    {
-      id:'malaise', emoji:'😵', title:'La victime se plaint de malaise', keywords:'malaise avc vagal chaleur infarctus',
+      principales:`<ul class="action-list"><li>Allonger la victime sur le dos.</li><li>Libérer les voies respiratoires.</li><li>Si son état résulte d'un évènement <strong>non traumatique</strong>, mettre la victime sur le côté (position latérale de sécurité – PLS).</li><li>Si son état résulte d'un évènement <strong>traumatique</strong> ou d'un évènement dont on ne connaît pas l'origine : laisser la victime sur le dos et maintenir la liberté des voies aériennes.</li></ul>`,
+      complementaires:`<ul class="action-list"><li>Couvrir.</li><li>Surveiller en permanence sa respiration.</li></ul>` },
+    { id:'malaise', icon:'malaise', title:'La victime se plaint de malaise', keywords:'malaise avc vagal chaleur infarctus',
       resultat:"Éviter l'aggravation et prendre un avis médical",
-      principales:`<ul class="action-list">
-        <li>Observer les signes du malaise, en particulier les signes d'accident vasculaire cérébral (AVC), d'accident cardiaque ou de maladie infectieuse.</li>
-        <li>Mettre la victime au repos.</li>
-        <li>Écouter, questionner la victime et/ou son entourage.</li>
-        <li>Suivre les conseils donnés par les secours.</li>
-      </ul>`,
+      principales:`<ul class="action-list"><li>Observer les signes du malaise, en particulier les signes d'accident vasculaire cérébral (AVC), d'accident cardiaque ou de maladie infectieuse.</li><li>Mettre la victime au repos.</li><li>Écouter, questionner la victime et/ou son entourage.</li><li>Suivre les conseils donnés par les secours.</li></ul>`,
       cas:`<h4 class="subtitle">Cas particuliers</h4>
-      <ul class="action-list">
-        <li>Si la victime reconnaît les signes d'un <strong>malaise vagal</strong> dont elle a l'habitude, et s'il est impossible de l'allonger, l'inviter à réaliser une des manœuvres suivantes pour éviter une perte de connaissance, en agissant sur la circulation :
-          <ul>
-            <li>se placer en position accroupie et baisser la tête ;</li>
-            <li>ou croiser les membres inférieurs et contracter les muscles ;</li>
-            <li>ou agripper les deux mains par les doigts en crochet et écarter les coudes.</li>
-          </ul>
-        </li>
-        <li>Si le malaise est provoqué par la <strong>chaleur</strong> :
-          <ul>
-            <li>installer la victime dans un endroit frais et aéré ;</li>
-            <li>la rafraîchir et lui faire boire de l'eau fraîche par petites quantités si elle est consciente et capable de boire.</li>
-          </ul>
-        </li>
-      </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Aider, à sa demande, la victime à prendre un médicament ou du sucre.</li>
-        <li>Réconforter et surveiller.</li>
-      </ul>`
-    },
-    {
-      id:'brulure', emoji:'🔥', title:'La victime se plaint de brûlures', keywords:'brûlure thermique chimique électrique eau',
+      <ul class="action-list"><li>Si la victime reconnaît les signes d'un <strong>malaise vagal</strong> dont elle a l'habitude, et s'il est impossible de l'allonger, l'inviter à réaliser une des manœuvres suivantes pour éviter une perte de connaissance, en agissant sur la circulation :
+        <ul><li>se placer en position accroupie et baisser la tête ;</li><li>ou croiser les membres inférieurs et contracter les muscles ;</li><li>ou agripper les deux mains par les doigts en crochet et écarter les coudes.</li></ul></li>
+      <li>Si le malaise est provoqué par la <strong>chaleur</strong> :
+        <ul><li>installer la victime dans un endroit frais et aéré ;</li><li>la rafraîchir et lui faire boire de l'eau fraîche par petites quantités si elle est consciente et capable de boire.</li></ul></li></ul>`,
+      complementaires:`<ul class="action-list"><li>Aider, à sa demande, la victime à prendre un médicament ou du sucre.</li><li>Réconforter et surveiller.</li></ul>` },
+    { id:'brulure', icon:'brulure', title:'La victime se plaint de brûlures', keywords:'brûlure thermique chimique électrique eau',
       resultat:"Éviter l'aggravation de la brûlure",
-      principales:`<ul class="action-list">
-        <li>Si la brûlure est d'origine <strong>thermique ou électrique</strong> :
-          <ul>
-            <li>arroser immédiatement la zone brûlée à l'eau courante tempérée pendant au moins 10 minutes (idéalement 20 minutes) ;</li>
-            <li>en parallèle, retirer les vêtements s'ils n'adhèrent pas à la peau.</li>
-          </ul>
-        </li>
-        <li>Si la brûlure est d'origine <strong>chimique</strong> :
-          <ul>
-            <li>rincer immédiatement la zone brûlée à l'eau courante tempérée pour éliminer le produit ;</li>
-            <li>éviter que l'eau de ruissellement ne contamine des zones saines (œil, peau…) de la victime ;</li>
-            <li>parallèlement, ôter les vêtements imbibés de produit en se protégeant.</li>
-          </ul>
-        </li>
-      </ul>`,
+      principales:`<ul class="action-list"><li>Si la brûlure est d'origine <strong>thermique ou électrique</strong> :
+        <ul><li>arroser immédiatement la zone brûlée à l'eau courante tempérée pendant au moins 10 minutes (idéalement 20 minutes) ;</li><li>en parallèle, retirer les vêtements s'ils n'adhèrent pas à la peau.</li></ul></li>
+      <li>Si la brûlure est d'origine <strong>chimique</strong> :
+        <ul><li>rincer immédiatement la zone brûlée à l'eau courante tempérée pour éliminer le produit ;</li><li>éviter que l'eau de ruissellement ne contamine des zones saines (œil, peau…) de la victime ;</li><li>parallèlement, ôter les vêtements imbibés de produit en se protégeant.</li></ul></li></ul>`,
       cas:`<h4 class="subtitle">Cas particuliers — ingestion ou inhalation de produits caustiques ou corrosifs</h4>
-      <ul class="action-list">
-        <li>Ne pas faire vomir ou boire.</li>
-        <li>Placer la victime en position assise en cas de difficultés respiratoires.</li>
-      </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Faire allonger ou placer en position assise en cas de difficultés respiratoires.</li>
-        <li>En cas de brûlure avec un produit chimique, consulter et conserver les informations de la fiche de données de sécurité du produit.</li>
-        <li>Couvrir.</li>
-        <li>Réconforter et surveiller.</li>
-      </ul>`
-    },
-    {
-      id:'trauma', emoji:'🦴', title:'Douleur / mouvement empêché', keywords:'traumatisme fracture cou rachis membre chute',
+      <ul class="action-list"><li>Ne pas faire vomir ou boire.</li><li>Placer la victime en position assise en cas de difficultés respiratoires.</li></ul>`,
+      complementaires:`<ul class="action-list"><li>Faire allonger ou placer en position assise en cas de difficultés respiratoires.</li><li>En cas de brûlure avec un produit chimique, consulter et conserver les informations de la fiche de données de sécurité du produit.</li><li>Couvrir.</li><li>Réconforter et surveiller.</li></ul>` },
+    { id:'trauma', icon:'trauma', title:'Douleur / mouvement empêché', keywords:'traumatisme fracture cou rachis membre chute',
       resultat:"Éviter l'aggravation du traumatisme supposé",
       principales:`<h4 class="subtitle">Douleur au cou à la suite d'un traumatisme</h4>
-      <ul class="action-list">
-        <li>Demander à la victime de ne pas bouger la tête.</li>
-        <li>Éviter toute manipulation intempestive.</li>
-        <li>Stabiliser si possible le rachis cervical, dans la position où il se trouve, en maintenant la tête à deux mains.</li>
-      </ul>
+      <ul class="action-list"><li>Demander à la victime de ne pas bouger la tête.</li><li>Éviter toute manipulation intempestive.</li><li>Stabiliser si possible le rachis cervical, dans la position où il se trouve, en maintenant la tête à deux mains.</li></ul>
       <h4 class="subtitle">Traumatisme d'un membre</h4>
-      <ul class="action-list">
-        <li>Demander à la victime de ne pas bouger la partie atteinte.</li>
-        <li>Éviter toute manipulation intempestive.</li>
-        <li>Respecter la position prise par la victime.</li>
-      </ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Couvrir.</li>
-        <li>Réconforter et surveiller.</li>
-      </ul>`
-    },
-    {
-      id:'plaie', emoji:'🩹', title:'Plaie qui ne saigne pas abondamment', keywords:'plaie coupure blessure section membre',
+      <ul class="action-list"><li>Demander à la victime de ne pas bouger la partie atteinte.</li><li>Éviter toute manipulation intempestive.</li><li>Respecter la position prise par la victime.</li></ul>`,
+      complementaires:`<ul class="action-list"><li>Couvrir.</li><li>Réconforter et surveiller.</li></ul>` },
+    { id:'plaie', icon:'plaie', title:'Plaie qui ne saigne pas abondamment', keywords:'plaie coupure blessure section membre',
       resultat:"Éviter l'aggravation de la plaie",
       principales:`<h4 class="subtitle">Pour une plaie grave</h4>
-      <ul class="action-list">
-        <li>Installer la victime en position :
-          <ul>
-            <li>plaie du thorax : assise, en laissant la plaie à l'air libre ;</li>
-            <li>plaie de l'abdomen : à plat dos, jambes fléchies ;</li>
-            <li>plaie de l'œil : allongée, les deux yeux fermés et si possible en maintenant sa tête à deux mains.</li>
-          </ul>
-        </li>
-        <li>Ne pas retirer les corps étrangers éventuellement présents dans la plaie.</li>
-        <li>Dans le cas d'une section de membre, protéger le moignon (champ stérile, compresses ou linge propre) et isoler le segment sectionné dans un sac placé dans un contenant réfrigéré permettant le transport.</li>
-      </ul>
+      <ul class="action-list"><li>Installer la victime en position :
+        <ul><li>plaie du thorax : assise, en laissant la plaie à l'air libre ;</li><li>plaie de l'abdomen : à plat dos, jambes fléchies ;</li><li>plaie de l'œil : allongée, les deux yeux fermés et si possible en maintenant sa tête à deux mains.</li></ul></li>
+      <li>Ne pas retirer les corps étrangers éventuellement présents dans la plaie.</li>
+      <li>Dans le cas d'une section de membre, protéger le moignon (champ stérile, compresses ou linge propre) et isoler le segment sectionné dans un sac placé dans un contenant réfrigéré permettant le transport.</li></ul>
       <h4 class="subtitle">Pour une plaie simple</h4>
       <ul class="action-list"><li>Nettoyer et protéger la plaie.</li></ul>`,
-      complementaires:`<ul class="action-list">
-        <li>Lui demander de :
-          <ul>
-            <li>s'assurer que sa vaccination antitétanique est à jour ;</li>
-            <li>consulter un médecin en cas d'apparition, dans les jours qui suivent, de fièvre, d'une zone chaude, rouge, gonflée ou douloureuse.</li>
-          </ul>
-        </li>
-      </ul>`
-    }
+      complementaires:`<ul class="action-list"><li>Lui demander de :
+        <ul><li>s'assurer que sa vaccination antitétanique est à jour ;</li><li>consulter un médecin en cas d'apparition, dans les jours qui suivent, de fièvre, d'une zone chaude, rouge, gonflée ou douloureuse.</li></ul></li></ul>` }
   ],
 
   verifStandard: "Vérifier, par observation, l'atteinte et la persistance du résultat attendu, jusqu'à la prise en charge de la victime par les secours."
@@ -438,7 +398,6 @@ const DATA = {
 
 // ---------- Router / rendering ----------
 const app = document.getElementById('app');
-
 function go(hash){ location.hash = hash; }
 
 function topbar(title, back){
@@ -467,33 +426,36 @@ function renderHome(){
     ${topbar('SST Aide-mémoire', false)}
     <main>
       <div class="search-wrap">
-        <input id="searchInput" type="text" placeholder="🔍 Rechercher un symptôme (ex: brûlure, saigne...)">
+        <input id="searchInput" type="text" placeholder="Rechercher un symptôme (ex : brûlure, saigne...)">
         <div class="search-results" id="searchResults"></div>
       </div>
       <div class="hero">
         <h1>Prévention et secours</h1>
         <p>Aide-mémoire du sauveteur secouriste du travail — consultable hors ligne</p>
       </div>
-      <button class="urgence-btn" onclick="go('secourir')">🚨 Situation d'urgence — je dois secourir <span class="arrow">→</span></button>
+      <button class="urgence-btn" onclick="go('secourir')">
+        <div class="icon-box" style="width:34px;height:34px">${ICONS.siren}</div>
+        Situation d'urgence — je dois secourir <span class="arrow">→</span>
+      </button>
       <div class="grid2">
         <button class="card orange" onclick="go('prevention')">
-          <div class="icon">🛡️</div>
+          <div class="icon-box">${ICONS.shield}</div>
           <div class="label">Prévention</div>
           <div class="sub">Repérer, supprimer, informer</div>
         </button>
         <button class="card green" onclick="go('secours')">
-          <div class="icon">🚑</div>
+          <div class="icon-box">${ICONS.cross}</div>
           <div class="label">Secours</div>
           <div class="sub">Protéger · Examiner · Alerter · Secourir</div>
         </button>
       </div>
       <div class="list-item" onclick="go('plan')">
-        <div class="emoji">⏱️</div>
+        ${iconSquare('clock')}
         <div class="txt"><div class="t">Plan d'intervention SST</div><div class="s">Moins de 3 minutes pour agir</div></div>
         <div class="chev">›</div>
       </div>
       <div class="list-item" onclick="go('apropos')">
-        <div class="emoji">ℹ️</div>
+        ${iconSquare('info')}
         <div class="txt"><div class="t">À propos de ce document</div><div class="s">Certification, renouvellement, édition INRS</div></div>
         <div class="chev">›</div>
       </div>
@@ -508,120 +470,102 @@ function onSearch(e){
   const box = document.getElementById('searchResults');
   if (!q){ box.innerHTML=''; return; }
   const hits = DATA.secourir.filter(s => (s.title+' '+s.keywords).toLowerCase().includes(q));
-  box.innerHTML = hits.map(s => `<div class="search-hit" onclick="go('scenario/${s.id}')"><span>${s.emoji} ${s.title}</span><span>›</span></div>`).join('') || `<div class="search-hit" style="cursor:default;color:var(--text-muted)">Aucun résultat</div>`;
+  box.innerHTML = hits.map(s => `<div class="search-hit" onclick="go('scenario/${s.id}')"><span>${s.title}</span><span>›</span></div>`).join('') || `<div class="search-hit" style="cursor:default;color:var(--text-muted)">Aucun résultat</div>`;
 }
 
 function renderPrevention(){
-  app.innerHTML = `
-    ${topbar('Prévention')}
-    <main>
-      ${DATA.prevention.map(p => `
-        <div class="list-item" onclick="go('prevention/${p.id}')">
-          <div class="emoji">${p.emoji}</div>
-          <div class="txt"><div class="t">${p.title}</div></div>
-          <div class="chev">›</div>
-        </div>`).join('')}
-    </main>`;
+  app.innerHTML = `${topbar('Prévention')}<main>
+    ${DATA.prevention.map(p => `
+      <div class="list-item" onclick="go('prevention/${p.id}')">
+        ${iconSquare(p.icon,'accent-orange')}
+        <div class="txt"><div class="t">${p.title}</div></div>
+        <div class="chev">›</div>
+      </div>`).join('')}
+  </main>`;
 }
 
 function renderPreventionDetail(id){
   const p = DATA.prevention.find(x=>x.id===id);
-  app.innerHTML = `${topbar(p.title)}<main>${p.html}</main>`;
+  app.innerHTML = `${topbar(p.title)}<main>${iconHero(p.icon)}${p.html}</main>`;
 }
 
 function renderSecours(){
-  app.innerHTML = `
-    ${topbar('Secours')}
-    <main>
-      <div class="body-text">${DATA.secoursIntro}</div>
-      <div class="section-title">Les 4 étapes</div>
-      ${DATA.steps.map(s => `
-        <div class="list-item" onclick="go('step/${s.id}')">
-          <div class="emoji">${s.emoji}</div>
-          <div class="txt"><div class="t">${s.num}. ${s.title}</div></div>
-          <div class="chev">›</div>
-        </div>`).join('')}
-      <div class="list-item" onclick="go('secourir')" style="border-color:var(--green)">
-        <div class="emoji">❤️‍🩹</div>
-        <div class="txt"><div class="t">4. Secourir — choisir un symptôme</div></div>
+  app.innerHTML = `${topbar('Secours')}<main>
+    <div class="body-text">${DATA.secoursIntro}</div>
+    <div class="section-title">Les 4 étapes</div>
+    ${DATA.steps.map(s => `
+      <div class="list-item" onclick="go('step/${s.id}')">
+        ${iconSquare(s.icon,'accent-green')}
+        <div class="txt"><div class="t">${s.num}. ${s.title}</div></div>
         <div class="chev">›</div>
-      </div>
-    </main>`;
+      </div>`).join('')}
+    <div class="list-item" onclick="go('secourir')" style="border-color:var(--green)">
+      ${iconSquare('cross','accent-green')}
+      <div class="txt"><div class="t">4. Secourir — choisir un symptôme</div></div>
+      <div class="chev">›</div>
+    </div>
+  </main>`;
 }
 
 function renderStep(id){
   const s = DATA.steps.find(x=>x.id===id);
-  app.innerHTML = `${topbar(s.title)}<main>${s.html}</main>`;
+  app.innerHTML = `${topbar(s.title)}<main>${iconHero(s.icon)}${s.html}</main>`;
 }
 
 function renderSecourirList(){
-  app.innerHTML = `
-    ${topbar('Secourir — choisir un symptôme')}
-    <main>
-      <div class="note">Sélectionnez la situation qui correspond à ce que vous observez.</div>
-      ${DATA.secourir.map(s => `
-        <div class="list-item" onclick="go('scenario/${s.id}')">
-          <div class="emoji">${s.emoji}</div>
-          <div class="txt"><div class="t">${s.title}</div></div>
-          <div class="chev">›</div>
-        </div>`).join('')}
-    </main>`;
+  app.innerHTML = `${topbar('Secourir — choisir un symptôme')}<main>
+    <div class="note">Sélectionnez la situation qui correspond à ce que vous observez.</div>
+    ${DATA.secourir.map(s => `
+      <div class="list-item" onclick="go('scenario/${s.id}')">
+        ${iconSquare(s.icon,'accent-danger')}
+        <div class="txt"><div class="t">${s.title}</div></div>
+        <div class="chev">›</div>
+      </div>`).join('')}
+  </main>`;
 }
 
 function renderScenario(id){
   const s = DATA.secourir.find(x=>x.id===id);
-  app.innerHTML = `
-    ${topbar(s.title)}
-    <main>
-      <div class="result-banner"><div class="k">Résultat à atteindre</div><div class="v">${s.resultat}</div></div>
-      <h3 class="blocktitle">Actions principales</h3>
-      ${s.principales}
-      ${s.cas || ''}
-      <div class="note">👁️ ${DATA.verifStandard}</div>
-      <h3 class="blocktitle">Actions complémentaires</h3>
-      ${s.complementaires}
-    </main>`;
+  app.innerHTML = `${topbar(s.title)}<main>
+    ${iconHero(s.icon)}
+    <div class="result-banner"><div class="k">Résultat à atteindre</div><div class="v">${s.resultat}</div></div>
+    <h3 class="blocktitle">Actions principales</h3>
+    ${s.principales}
+    ${s.cas || ''}
+    <div class="note">${DATA.verifStandard}</div>
+    <h3 class="blocktitle">Actions complémentaires</h3>
+    ${s.complementaires}
+  </main>`;
 }
 
 function renderPlan(){
-  app.innerHTML = `
-    ${topbar("Plan d'intervention SST")}
-    <main>
-      <div class="result-banner"><div class="k">À retenir</div><div class="v">Moins de trois minutes pour agir</div></div>
-      <div class="flow">
-        <div class="fstep" onclick="go('step/proteger')"><div class="n">1</div>🛑 Protéger</div>
-        <div class="arrowdown">↓</div>
-        <div class="fstep" onclick="go('step/examiner')"><div class="n">2</div>🔍 Examiner</div>
-        <div class="arrowdown">↓</div>
-        <div class="fstep" onclick="go('step/alerter')"><div class="n">3</div>📞 Faire alerter</div>
-        <div class="arrowdown">↓</div>
-        <div class="fstep" onclick="go('secourir')"><div class="n">4</div>❤️‍🩹 Secourir</div>
-      </div>
-      <div class="note">🦠 En période d'épidémie (telle que la Covid-19), le SST doit se protéger et adapter la conduite à tenir, notamment en respectant les consignes sanitaires nationales, les consignes de secours applicables dans l'entreprise, ainsi que, le cas échéant, les recommandations spécifiques de l'INRS.</div>
-    </main>`;
+  app.innerHTML = `${topbar("Plan d'intervention SST")}<main>
+    <div class="result-banner"><div class="k">À retenir</div><div class="v">Moins de trois minutes pour agir</div></div>
+    <div class="flow">
+      <div class="fstep" onclick="go('step/proteger')">${iconSquare('dangerWarn')}Protéger</div>
+      <div class="arrowdown">↓</div>
+      <div class="fstep" onclick="go('step/examiner')">${iconSquare('magnify','accent-green')}Examiner</div>
+      <div class="arrowdown">↓</div>
+      <div class="fstep" onclick="go('step/alerter')">${iconSquare('phoneAlert','accent-green')}Faire alerter</div>
+      <div class="arrowdown">↓</div>
+      <div class="fstep" onclick="go('secourir')">${iconSquare('cross','accent-green')}Secourir</div>
+    </div>
+    <div class="note">En période d'épidémie (telle que la Covid-19), le SST doit se protéger et adapter la conduite à tenir, notamment en respectant les consignes sanitaires nationales, les consignes de secours applicables dans l'entreprise, ainsi que, le cas échéant, les recommandations spécifiques de l'INRS.</div>
+  </main>`;
 }
 
 function renderApropos(){
-  app.innerHTML = `
-    ${topbar('À propos')}
-    <main>
-      <div class="body-text">
-        <p>Vous êtes certifié sauveteur secouriste du travail (SST). Au cours de votre formation, vous avez acquis des compétences qui vous permettent de :</p>
-      </div>
-      <ul class="action-list">
-        <li>contribuer à la prévention des risques professionnels dans l'entreprise ;</li>
-        <li>intervenir face à une situation d'accident du travail.</li>
-      </ul>
-      <div class="body-text">
-        <p>Votre action s'inscrit dans la démarche de prévention menée par votre employeur ainsi que dans le cadre de l'organisation des secours de l'entreprise.</p>
-      </div>
-      <div class="note">📅 Pour conserver la validité de votre certificat, il est nécessaire de suivre une formation « Maintien et actualisation des compétences » tous les 24 mois.</div>
-      <div class="body-text" style="margin-top:20px;font-size:12.5px;color:var(--text-muted)">
-        <p>Institut national de recherche et de sécurité pour la prévention des accidents du travail et des maladies professionnelles (INRS)<br>
-        65, boulevard Richard-Lenoir, 75011 Paris — 01 40 44 30 00 — info@inrs.fr</p>
-        <p>Édition INRS ED 4085 — 6ᵉ édition (2024), révisée en mars 2026.</p>
-      </div>
-    </main>`;
+  app.innerHTML = `${topbar('À propos')}<main>
+    <div class="body-text"><p>Vous êtes certifié sauveteur secouriste du travail (SST). Au cours de votre formation, vous avez acquis des compétences qui vous permettent de :</p></div>
+    <ul class="action-list"><li>contribuer à la prévention des risques professionnels dans l'entreprise ;</li><li>intervenir face à une situation d'accident du travail.</li></ul>
+    <div class="body-text"><p>Votre action s'inscrit dans la démarche de prévention menée par votre employeur ainsi que dans le cadre de l'organisation des secours de l'entreprise.</p></div>
+    <div class="note">Pour conserver la validité de votre certificat, il est nécessaire de suivre une formation « Maintien et actualisation des compétences » tous les 24 mois.</div>
+    <div class="body-text" style="margin-top:20px;font-size:12.5px;color:var(--text-muted)">
+      <p>Institut national de recherche et de sécurité pour la prévention des accidents du travail et des maladies professionnelles (INRS)<br>
+      65, boulevard Richard-Lenoir, 75011 Paris — 01 40 44 30 00 — info@inrs.fr</p>
+      <p>Édition INRS ED 4085 — 6ᵉ édition (2024), révisée en mars 2026.</p>
+    </div>
+  </main>`;
 }
 
 window.addEventListener('hashchange', render);
